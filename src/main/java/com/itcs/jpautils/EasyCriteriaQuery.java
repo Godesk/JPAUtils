@@ -45,6 +45,7 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
     private int lastResult;
     private final LinkedList<PredicateBuilder<T>> emptyList;
     private final LinkedList<PredicateBuilder<T>> notEmptyList;
+    private EntityManager entityManager;
 
     /**
      * Clase que permite crear un CriteriaQuery de forma sencilla utilizando
@@ -66,8 +67,25 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
         betweenList = new LinkedList<PredicateBuilder<T>>();
     }
 
+    public EasyCriteriaQuery(EntityManager entityManager, Class<T> entityBeanType) {
+        this.entityManager = entityManager;
+        this.entityBeanType = entityBeanType;
+//        this.entityBeanType = ((Class) ((ParameterizedType) getClass()
+//                .getGenericSuperclass()).getActualTypeArguments()[0]);
+        equalList = new LinkedList<Object[]>();
+        distinctList = new LinkedList<Object[]>();
+        likeList = new LinkedList<Object[]>();
+        emptyList = new LinkedList<PredicateBuilder<T>>();
+        notEmptyList = new LinkedList<PredicateBuilder<T>>();
+        betweenList = new LinkedList<PredicateBuilder<T>>();
+    }
+
     public EntityManager getEntityManager() {
-        return emf.createEntityManager();
+        if (null == entityManager) {
+            return emf.createEntityManager();
+        } else {
+            return entityManager;
+        }
     }
 
     /**
@@ -199,7 +217,8 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
             }
             return this.criteriaBuilder;
         } finally {
-            em.close();
+
+            closeIfNeeded(em);
         }
     }
 
@@ -255,6 +274,12 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
             Long retorno = ((Long) q.getSingleResult()).longValue();
             return retorno;
         } finally {
+            closeIfNeeded(em);
+        }
+    }
+
+    private void closeIfNeeded(EntityManager em) {
+        if (entityManager == null) {
             em.close();
         }
     }
@@ -334,7 +359,7 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
             setFirstResult(firstResult + maxResults);
             return !list.isEmpty();
         } finally {
-            em.close();
+            closeIfNeeded(em);
         }
     }
 
@@ -346,7 +371,7 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
             query.setHint(QueryHints.REFRESH, HintValues.TRUE);
             return query.getResultList();
         } finally {
-            em.close();
+            closeIfNeeded(em);
         }
     }
 
@@ -358,7 +383,7 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
             query.setHint(QueryHints.REFRESH, HintValues.TRUE);
             return query.getSingleResult();
         } finally {
-            em.close();
+            closeIfNeeded(em);
         }
     }
 
