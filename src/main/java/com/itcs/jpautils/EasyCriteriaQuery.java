@@ -137,6 +137,14 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
     public <Y extends Comparable<? super Y>> void addBetweenPredicate(SingularAttribute<? super T, Y> field, Y object1, Y object2) {
         betweenList.add(new BetweenParams<T, Y>(field, object1, object2));
     }
+    
+    public <Y extends Comparable<? super Y>> void addLessThanPredicate(SingularAttribute<? super T, Y> field, Y object1, boolean lessOrEqualThan) {
+        betweenList.add(new LessThanParams<T, Y>(field, object1, lessOrEqualThan));
+    }
+    
+    public <Y extends Comparable<? super Y>> void addGreaterThanPredicate(SingularAttribute<? super T, Y> field, Y object1, boolean greaterOrEqualThan) {
+        betweenList.add(new GreaterThanParams<T, Y>(field, object1, greaterOrEqualThan));
+    }
 
     public <Y, C extends Collection<Y>> void addIsEmptyPredicate(String field) {
         emptyList.add(new EmptyParam<Y, C>(field));
@@ -414,6 +422,48 @@ public class EasyCriteriaQuery<T> implements Iterator<List<T>> {
      */
     public void setLastResult(int lastResult) {
         this.lastResult = lastResult;
+    }
+    
+    class LessThanParams<T, Y extends Comparable<? super Y>> implements PredicateBuilder<T> {
+
+        private final SingularAttribute<? super T, Y> field;
+        private final Y value;
+        private boolean lessOrEqualThan = false;
+
+        public LessThanParams(SingularAttribute<? super T, Y> field, Y value, boolean lessOrEqualThan) {
+            this.field = field;
+            this.value = value;
+            this.lessOrEqualThan = lessOrEqualThan;
+        }
+
+        @Override
+        public Predicate build(CriteriaBuilder builder, Path<T> path) {
+            if(lessOrEqualThan){
+                return builder.lessThanOrEqualTo(path.get(field), value);
+            }
+            return builder.lessThan(path.get(field), value);
+        }
+    }
+    
+    class GreaterThanParams<T, Y extends Comparable<? super Y>> implements PredicateBuilder<T> {
+
+        private final SingularAttribute<? super T, Y> field;
+        private final Y value;
+        private boolean greaterOrEqualThan = false;
+
+        public GreaterThanParams(SingularAttribute<? super T, Y> field, Y value, boolean greaterOrEqualThan) {
+            this.field = field;
+            this.value = value;
+            this.greaterOrEqualThan = greaterOrEqualThan;
+        }
+
+        @Override
+        public Predicate build(CriteriaBuilder builder, Path<T> path) {
+            if(greaterOrEqualThan){
+                return builder.greaterThanOrEqualTo(path.get(field), value);
+            }
+            return builder.greaterThan(path.get(field), value);
+        }
     }
 
     class BetweenParams<T, Y extends Comparable<? super Y>> implements PredicateBuilder<T> {
